@@ -1,3 +1,5 @@
+> **Nueva edición para trabajo por turnos:** véase [browser-edition/README.md](browser-edition/README.md). Se abre en el navegador sin servidor ni ejecutables y mantiene separados los datos de la distribución. La edición Go descrita a continuación sigue conservada; 8.2.0 está en revisión por bloqueo de Cortex XDR, según [el informe antivirus](docs/ANTIVIRUS_REVIEW.md).
+
 # Control de Buceadores — portátil, servidor LAN y actualizaciones
 
 Aplicación Go autocontenida para Windows x64 y ARM64. El usuario solo descomprime el paquete de su arquitectura y abre `CONTROL_BUCEADORES/EJECUTAR.bat`. No necesita Go, Git, Python, Node, base de datos ni instalador. Un único servidor utiliza los datos; los clientes acceden con su navegador.

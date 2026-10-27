@@ -1,0 +1,211 @@
+:root {
+  font:
+    16px system-ui,
+    Arial;
+  color: #17334a;
+  background: #eef3f7;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+header {
+  background: #103951;
+  color: white;
+  padding: 18px 4%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+h1 {
+  font-size: 24px;
+  margin: 0 0 4px;
+}
+h2 {
+  font-size: 23px;
+}
+main {
+  max-width: 1250px;
+  margin: 24px auto;
+  padding: 0 20px;
+}
+#status {
+  padding: 12px 4%;
+  background: #d9eaf4;
+}
+#status.error {
+  background: #ffe0dc;
+  color: #802313;
+}
+nav {
+  padding: 12px 4%;
+  display: flex;
+  gap: 8px;
+  background: white;
+  flex-wrap: wrap;
+}
+.card {
+  background: white;
+  padding: 22px;
+  margin: 15px 0;
+  border: 1px solid #cedce6;
+  border-radius: 8px;
+}
+.warning {
+  background: #fff5d9;
+  padding: 12px;
+  border-left: 4px solid #b27b00;
+}
+button,
+.button {
+  border: 0;
+  background: #075d89;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 4px;
+}
+button.secondary {
+  background: #46667a;
+}
+button.danger {
+  background: #a92e26;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+label {
+  display: block;
+  margin: 12px 0 5px;
+}
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid #92a9b9;
+  border-radius: 4px;
+  font: inherit;
+}
+input[type="checkbox"] {
+  width: auto;
+}
+textarea {
+  min-height: 80px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 15px;
+}
+.table {
+  overflow: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+th,
+td {
+  border: 1px solid #bdcdd8;
+  padding: 9px;
+  text-align: left;
+}
+th {
+  background: #e9f1f6;
+}
+.badge {
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: #e5e9ed;
+}
+.OK {
+  background: #d8f0df;
+}
+.A_RECUPERAR {
+  background: #fff0c8;
+}
+.FUERA_DE_PLAZO {
+  background: #ffdddd;
+}
+.photo {
+  width: 140px;
+  max-height: 180px;
+  object-fit: contain;
+}
+.toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.editable {
+  outline: 1px dashed #91abbc;
+}
+.signatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 35px;
+  text-align: center;
+}
+dialog {
+  max-width: 600px;
+  border: 1px solid #6c8797;
+  border-radius: 8px;
+}
+dialog::backdrop {
+  background: #112c4870;
+}
+.muted {
+  color: #536b7e;
+}
+a {
+  color: #075d89;
+}
+#monthly {
+  background: white;
+  padding: 20px;
+}
+.print-only {
+  display: none;
+}
+@media print {
+  header,
+  nav,
+  #status,
+  .no-print,
+  dialog,
+  button {
+    display: none !important;
+  }
+  body {
+    background: white;
+    color: black;
+  }
+  main {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+  .card {
+    border: 0;
+    padding: 0;
+  }
+  .print-only {
+    display: block;
+  }
+  tr {
+    break-inside: avoid;
+  }
+  .editable {
+    outline: 0;
+  }
+  #monthly {
+    padding: 0;
+  }
+}

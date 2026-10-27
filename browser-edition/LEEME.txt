@@ -1,0 +1,51 @@
+CONTROL DE BUCEADORES · EDICIÓN NAVEGADOR 9.0.0
+
+1. Descomprima la carpeta completa. No abra el HTML dentro del ZIP.
+2. Abra ABRIR.html con Microsoft Edge o Google Chrome actualizado.
+3. Confirme que nadie más está utilizando los datos y seleccione la carpeta
+   NO TOCAR que contiene data/store.json. Para una instalación nueva puede
+   seleccionar el NO TOCAR vacío de este paquete.
+4. El navegador debe conceder lectura y escritura a esa carpeta. La aplicación
+   no modifica políticas ni desactiva protecciones. Si se deniega el permiso,
+   se detiene: no se ha guardado nada. Firefox no admite este modo de carpetas.
+5. En una instalación nueva: usuario admin, contraseña Zocotroco$01. Cambie
+   el nombre/contraseña en Mi cuenta. Las cuentas V7 sin iteraciones tienen
+   recuperación administrativa EXPLÍCITA, con confirmación y backup previo.
+6. Termine el turno usando el botón superior antes de cerrar la pestaña.
+   Si se cerró inesperadamente, el aviso de turno vence en diez minutos;
+   recupérelo únicamente después de confirmar que la otra sesión está cerrada.
+
+Esta edición funciona SIN servidor, ejecutables, instalador ni runtime adicional.
+No ejecuta la edición Go, no descarga programas y no conecta con GitHub ni otros
+servicios. Actualizar el HTML/JS es manual y no implica sustituir data/.
+No garantiza que las políticas corporativas permitan abrir HTML o escribir en SMB.
+
+DATOS Y COMPATIBILIDAD
+
+- Admite JSON de esquemas 3 y 4, conservando campos desconocidos. No borra ni
+  sobrescribe datos al seleccionar una carpeta con JSON inválido.
+- Crea copias ZIP con manifest y SHA-256 en data/backups antes de cada guardado.
+- Fotos opcionales PNG/JPEG para nuevas subidas. Conserva las fotos existentes.
+- Admite backups compatibles de la edición Go y el formato de Excel documentado.
+- Una restauración crea copia previa, conserva fotos antiguas, importa las fotos
+  con nombres nuevos y cierra la sesión. Puede necesitar más espacio en disco.
+- Los backups tienen un límite de 128 MB. Si se supera, se rechaza el guardado.
+- Si hay un guardado interrumpido, conserva la copia previa y muestra recuperación
+  al abrir nuevamente la carpeta. No borre browser-recovery.json manualmente.
+
+TRABAJO POR TURNOS: LÍMITES IMPORTANTES
+
+El aviso de turno y la comparación de hashes ayudan a evitar sobrescrituras, pero
+no constituyen un bloqueo distribuido fiable de un servidor. Dos equipos que
+ignoren la coordinación todavía pueden entrar en una carrera. NUNCA abra la
+edición Go ni otra sesión de edición simultáneamente sobre la misma carpeta.
+
+Las cuentas y permisos organizan las pantallas, pero no protegen los archivos
+contra alguien con permisos de escritura en Windows. Configure esos permisos
+según vuestra organización. Las contraseñas se guardan derivadas con PBKDF2,
+no en texto claro. No copie datos operativos a GitHub ni al ZIP de distribución.
+
+Primero pruebe con una COPIA de la carpeta. Conserve una copia externa de respaldo
+antes de utilizar datos reales. La política del navegador y el recurso SMB concreto
+necesitan prueba de aceptación en vuestro equipo. No se promete autorización por
+Cortex ni se ofrecen exclusiones, renombrados o mecanismos para eludirlo.

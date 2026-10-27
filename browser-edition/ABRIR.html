@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self' file:; style-src 'self' file: 'unsafe-inline'; img-src 'self' file: data: blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>Control de Buceadores · Navegador</title>
+    <link rel="stylesheet" href="assets/app.css" />
+    <script src="assets/model.js" defer></script>
+    <script src="assets/archive.js" defer></script>
+    <script src="assets/app.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>Control de Buceadores</h1>
+        <small>Edición navegador · Trabajo por turnos · Sin conexión</small>
+      </div>
+      <button id="close" hidden>Terminar turno</button>
+    </header>
+    <div id="status" role="status">
+      Seleccione la carpeta de datos para comenzar.
+    </div>
+    <nav id="nav" hidden></nav>
+    <main id="app">
+      <section class="card">
+        <h2>Abrir carpeta compartida</h2>
+        <p>
+          Use Microsoft Edge o Google Chrome actualizado. No se ejecuta ningún
+          programa ni se inicia un servidor.
+        </p>
+        <p>
+          Seleccione la carpeta <b>NO TOCAR</b> que contiene
+          <b>data/store.json</b>, o una carpeta vacía para una instalación
+          nueva. Cierre la aplicación Go antes de usar estos datos.
+        </p>
+        <label
+          ><input type="checkbox" id="accept" /> Confirmo que nadie más está
+          editando estos datos. Trabajaremos por turnos.</label
+        ><button id="connect">Seleccionar carpeta y comenzar turno</button>
+        <p class="warning">
+          Esta edición necesita permiso del navegador para leer y guardar
+          archivos. Las cuentas ayudan a organizar el trabajo; quien tenga
+          acceso de escritura a los archivos puede modificarlos fuera de la
+          aplicación.
+        </p>
+        <p id="compat"></p>
+      </section>
+    </main>
+    <dialog id="confirmation">
+      <form method="dialog">
+        <h2 id="dialog-title">Confirmar</h2>
+        <p id="dialog-text"></p>
+        <button value="cancel">Cancelar</button
+        ><button value="ok">Continuar</button>
+      </form>
+    </dialog>
+    <noscript
+      >Esta aplicación necesita JavaScript habilitado en el navegador.</noscript
+    >
+  </body>
+</html>

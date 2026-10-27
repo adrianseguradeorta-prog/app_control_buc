@@ -1,0 +1,62 @@
+name: Browser edition validation and package
+on:
+  push:
+    branches: [main]
+    paths:
+      [
+        "browser-edition/**",
+        "scripts/package_browser.py",
+        ".github/workflows/browser-edition.yml",
+      ]
+  workflow_dispatch:
+    inputs:
+      prepare_release:
+        description: Prepare a public browser edition prerelease after tests
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  browser-tests:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: python -m pip install playwright==1.58.0
+      - run: python -m playwright install chromium
+      - name: Test browser workflows and direct file opening
+        shell: pwsh
+        run: |
+          $output = python browser-edition/tests/test_browser.py 2>&1 | Out-String
+          $result = $LASTEXITCODE
+          Write-Output $output
+          if ($result -ne 0) {
+            $details=$output.Replace('%','%25').Replace("`r",'%0D').Replace("`n",'%0A')
+            Write-Output "::error title=Browser tests failed::$details"
+            exit $result
+          }
+          Write-Output '::notice title=Browser tests passed::Browser workflows and the direct file:// case completed on Windows. This does not certify corporate SMB/picker policy.'
+      - run: python scripts/package_browser.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: browser-edition
+          path: release-output/browser/*
+  release:
+    if: github.event_name == 'workflow_dispatch' && inputs.prepare_release
+    needs: browser-tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: browser-edition
+          path: browser-package
+      - name: Publish a separate browser edition
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create browser-v9.0.0 --prerelease --title 'Control de Buceadores 9.0.0 — navegador, por turnos' --notes 'Edición HTML/JavaScript sin ejecutables, servidor o instalador. Extraiga el ZIP completo y abra ABRIR.html con Edge/Chrome. Requiere permiso de carpeta y trabajo por turnos; lea LEEME.txt y pruebe primero con una copia. No sustituye la política de seguridad corporativa ni ofrece permisos de servidor.' browser-package/*.zip browser-package/SHA256SUMS_BROWSER.txt
