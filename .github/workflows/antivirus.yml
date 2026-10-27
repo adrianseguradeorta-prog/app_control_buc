@@ -1,0 +1,60 @@
+name: Verify published artifacts with Microsoft Defender
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Published stable version to verify
+        type: string
+        default: '8.2.0'
+permissions:
+  contents: read
+jobs:
+  defender:
+    runs-on: windows-latest
+    steps:
+      - name: Download the exact published packages
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ($env:VERSION -notmatch '^\d+\.\d+\.\d+$') { throw 'Invalid version' }
+          gh release download "v$env:VERSION" --pattern 'CONTROL_BUCEADORES_PORTABLE_windows-*.zip' --pattern 'SHA256SUMS.txt' --dir packages
+          if ($LASTEXITCODE -ne 0) { throw 'Download failed' }
+          $expected = @{}
+          Get-Content packages/SHA256SUMS.txt | ForEach-Object {
+            if ($_ -match '^([a-fA-F0-9]{64})\s+(.+)$') { $expected[$Matches[2].Trim()] = $Matches[1] }
+          }
+          Get-ChildItem packages/*.zip | ForEach-Object {
+            $actual = (Get-FileHash $_.FullName -Algorithm SHA256).Hash
+            if (!$expected.ContainsKey($_.Name) -or $actual -ne $expected[$_.Name]) { throw 'Published checksum mismatch' }
+            Expand-Archive $_.FullName -DestinationPath (Join-Path scan $_.BaseName)
+          }
+      - name: Verify signatures and scan without exclusions
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $status = Get-MpComputerStatus
+          if (!$status.AntivirusEnabled -or !$status.AMServiceEnabled) { throw 'Microsoft Defender is not available/enabled; scan is unverified' }
+          Update-MpSignature
+          $status = Get-MpComputerStatus
+          Write-Output "::notice title=Defender version::Engine $($status.AMEngineVersion); definitions $($status.AntivirusSignatureVersion); updated $($status.AntivirusSignatureLastUpdated)"
+          Get-ChildItem scan -Recurse -Filter *.exe | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash
+            $signature = Get-AuthenticodeSignature $_.FullName
+            Write-Output "::notice title=Artifact identity::$($_.Name): SHA256 $hash; signature $($signature.Status)"
+          }
+          $tool = Get-ChildItem "$env:ProgramData/Microsoft/Windows Defender/Platform/*/MpCmdRun.exe" | Sort-Object FullName -Descending | Select-Object -First 1
+          if (!$tool) { throw 'Defender scan tool is missing; scan is unverified' }
+          $output = & $tool.FullName -Scan -ScanType 3 -File (Resolve-Path scan).Path 2>&1 | Out-String
+          $scanExit = $LASTEXITCODE
+          $encoded = $output.Replace('%','%25').Replace("`r",'%0D').Replace("`n",'%0A')
+          Write-Output "::notice title=Defender scan output::$encoded"
+          $detections = @(Get-MpThreatDetection | Where-Object { $_.Resources -match '[\\/]scan[\\/]' })
+          if ($scanExit -ne 0 -or $detections.Count -ne 0) {
+            $details = ($detections | Select-Object ThreatID,ActionSuccess,Resources | ConvertTo-Json -Compress -Depth 4).Replace('%','%25').Replace("`r",'%0D').Replace("`n",'%0A')
+            Write-Output "::error title=Antivirus verification failed::Exit $scanExit; $details"
+            throw 'Threat detection or incomplete scan. Do not treat these packages as cleared.'
+          }
+          Write-Output '::notice title=Defender completed::The checked published files produced no detection in this run. This does not guarantee acceptance by other antivirus products or SmartScreen.'
