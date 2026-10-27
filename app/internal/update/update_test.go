@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -44,11 +45,22 @@ func TestReleaseValidation(t *testing.T) {
 		t.Run(kind, func(t *testing.T) {
 			var b bytes.Buffer
 			zw := zip.NewWriter(&b)
-			w, _ := zw.Create("server")
-			w.Write([]byte("verified test artifact"))
-			meta := map[string]any{"version": "9.0.0", "architecture": "linux-amd64", "schema_version": 4}
+			w, _ := zw.Create(filepath.Base(Program("", "9.0.0")))
+			dataExe := []byte("verified test artifact")
+			if runtime.GOOS == "windows" {
+				exe, e := os.Executable()
+				if e != nil {
+					t.Fatal(e)
+				}
+				dataExe, e = os.ReadFile(exe)
+				if e != nil {
+					t.Fatal(e)
+				}
+			}
+			w.Write(dataExe)
+			meta := map[string]any{"version": "9.0.0", "architecture": runtime.GOOS + "-" + runtime.GOARCH, "schema_version": 4}
 			if kind == "architecture" {
-				meta["architecture"] = "windows-arm64"
+				meta["architecture"] = "wrong-architecture"
 			}
 			if kind == "version" {
 				meta["version"] = "8.0.0"
@@ -84,7 +96,7 @@ func TestReleaseValidation(t *testing.T) {
 				}
 			}))
 			defer s.Close()
-			manifest = Manifest{Format: 1, Application: "control-buceadores", Version: "9.0.0", Schema: 4, Minimum: "1.0.0", Architectures: map[string]Asset{"linux-amd64": {File: s.URL + "/asset", SHA256: hash}}}
+			manifest = Manifest{Format: 1, Application: "control-buceadores", Version: "9.0.0", Schema: 4, Minimum: "1.0.0", Architectures: map[string]Asset{runtime.GOOS + "-" + runtime.GOARCH: {File: s.URL + "/asset", SHA256: hash}}}
 			if kind == "future-launcher" {
 				manifest.Minimum = "99.0.0"
 			}
@@ -102,7 +114,7 @@ func TestReleaseValidation(t *testing.T) {
 			if e = SaveState(base, State{Current: "8.0.0"}); e != nil {
 				t.Fatal(e)
 			}
-			_, e = Prepare(base, m, "linux-amd64", s.Client())
+			_, e = Prepare(base, m, runtime.GOOS+"-"+runtime.GOARCH, s.Client())
 			if kind == "ok" && e != nil {
 				t.Fatal(e)
 			}

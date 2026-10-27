@@ -1280,7 +1280,12 @@ func ListenAvailable(addr string, preferred int) (net.Listener, error) {
 		return nil, fmt.Errorf("puerto fuera de rango")
 	}
 	for p := preferred; p < preferred+100 && p <= 65535; p++ {
-		ln, e := net.Listen("tcp", net.JoinHostPort(addr, strconv.Itoa(p)))
+		network := "tcp"
+		ip := net.ParseIP(addr)
+		if addr == "localhost" || ip != nil && ip.To4() != nil {
+			network = "tcp4"
+		}
+		ln, e := net.Listen(network, net.JoinHostPort(addr, strconv.Itoa(p)))
 		if e == nil {
 			return ln, nil
 		}

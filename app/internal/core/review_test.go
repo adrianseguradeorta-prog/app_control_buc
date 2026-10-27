@@ -637,3 +637,21 @@ func TestPublishedFixturesContainOnlySyntheticPeople(t *testing.T) {
 		}
 	}
 }
+
+func TestWildcardUsesIPv4AndAvoidsOccupiedIPv4Port(t *testing.T) {
+	occupied, e := net.Listen("tcp4", "127.0.0.1:0")
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer occupied.Close()
+	port := occupied.Addr().(*net.TCPAddr).Port
+	listener, e := ListenAvailable("0.0.0.0", port)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer listener.Close()
+	addr := listener.Addr().(*net.TCPAddr)
+	if addr.IP.To4() == nil || addr.Port == port {
+		t.Fatalf("IPv4 listener was not reserved correctly: %s", addr)
+	}
+}
