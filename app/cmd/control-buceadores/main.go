@@ -29,6 +29,7 @@ type runtimeInfo struct {
 }
 
 func main() {
+	pending := flag.Bool("pending-activation", false, "bloquear usuarios hasta confirmar la versión")
 	managed := flag.Bool("managed", false, "iniciado por launcher con bloqueo de despliegue")
 	validate := flag.Bool("validate", false, "validar datos sin escribir ni arrancar")
 	version := flag.Bool("version", false, "mostrar versión")
@@ -114,6 +115,7 @@ func main() {
 			}
 		}
 	}
+	app.Initializing = *pending
 	app.Version = appVersion
 	listener, err := core.ListenAvailable(app.Config.BindAddress, app.Config.PreferredPort)
 	if err != nil {

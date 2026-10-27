@@ -655,3 +655,28 @@ func TestWildcardUsesIPv4AndAvoidsOccupiedIPv4Port(t *testing.T) {
 		t.Fatalf("IPv4 listener was not reserved correctly: %s", addr)
 	}
 }
+
+func TestCandidateBlocksWritesUntilActivation(t *testing.T) {
+	a, h, c, csrf := testApp(t)
+	a.Initializing = true
+	status(t, request(h, c, "POST", "/buceador/nuevo", diverValues(csrf)), 503)
+	status(t, request(h, c, "GET", "/login", nil), 503)
+	status(t, request(h, c, "GET", "/health", nil), 200)
+	a.Repo.Read(func(s Store) {
+		if len(s.Divers) != 0 {
+			t.Fatal("candidate accepted a write before activation")
+		}
+	})
+	for _, tc := range []struct {
+		remote, token string
+		want          int
+	}{{"203.0.113.1:1000", a.ShutdownToken, 403}, {"127.0.0.1:1000", "bad", 403}, {"127.0.0.1:1000", a.ShutdownToken, 200}} {
+		r := httptest.NewRequest("POST", "http://localhost/internal/activate?token="+tc.token, nil)
+		r.RemoteAddr = tc.remote
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		status(t, w, tc.want)
+	}
+	status(t, request(h, c, "GET", "/login", nil), 200)
+	status(t, request(h, c, "POST", "/buceador/nuevo", diverValues(csrf)), 302)
+}

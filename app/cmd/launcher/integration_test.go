@@ -146,7 +146,13 @@ func TestRealUpdateOfflineAndRollback(t *testing.T) {
 				if e == nil {
 					resp.Body.Close()
 					if resp.StatusCode == 200 {
-						return
+						page, e := client.Get(endpoint(r, "/login"))
+						if e == nil {
+							page.Body.Close()
+							if page.StatusCode == 200 {
+								return
+							}
+						}
 					}
 				}
 			}

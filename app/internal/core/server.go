@@ -31,6 +31,7 @@ type Session struct {
 }
 
 type App struct {
+	Initializing                                                     bool
 	requestMu                                                        sync.Mutex
 	Repo                                                             *Repository
 	Config                                                           Config
@@ -78,7 +79,7 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("/", a.root)
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		io.WriteString(w, `{"ok":true}`)
+		fmt.Fprintf(w, `{"ok":true,"ready":%t}`, !a.Initializing)
 	})
 	mux.HandleFunc("/login", a.login)
 	mux.HandleFunc("/logout", a.logout)
@@ -104,6 +105,16 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("/admin/restaurar", a.auth(a.restoreBackup, true))
 	mux.HandleFunc("/admin/cerrar", a.auth(a.shutdownWeb, true))
 	mux.HandleFunc("/internal/shutdown", a.internalShutdown)
+	mux.HandleFunc("/internal/activate", func(w http.ResponseWriter, r *http.Request) {
+		host, _, err := net.SplitHostPort(r.RemoteAddr)
+		ip := net.ParseIP(host)
+		if err != nil || ip == nil || !ip.IsLoopback() || r.Method != "POST" || r.URL.Query().Get("token") != a.ShutdownToken {
+			http.Error(w, "forbidden", 403)
+			return
+		}
+		a.Initializing = false
+		io.WriteString(w, "ok")
+	})
 	mux.HandleFunc("/internal/status", func(w http.ResponseWriter, r *http.Request) {
 		host, _, _ := net.SplitHostPort(r.RemoteAddr)
 		ip := net.ParseIP(host)
@@ -145,6 +156,12 @@ func (a *App) Handler() http.Handler {
 		if r.Method != "GET" && r.Method != "POST" {
 			w.Header().Set("Allow", "GET, POST")
 			http.Error(w, "Método no admitido", 405)
+			return
+		}
+		if a.Initializing && r.URL.Path != "/health" && r.URL.Path != "/internal/status" && r.URL.Path != "/internal/shutdown" && r.URL.Path != "/internal/activate" {
+			w.Header().Set("Retry-After", "1")
+			w.Header().Set("Refresh", "1")
+			http.Error(w, "Preparando la aplicación. Espere un momento.", 503)
 			return
 		}
 		r.Body = http.MaxBytesReader(w, r.Body, 32<<20)
@@ -1285,7 +1302,8 @@ func ListenAvailable(addr string, preferred int) (net.Listener, error) {
 		if addr == "localhost" || ip != nil && ip.To4() != nil {
 			network = "tcp4"
 		}
-		ln, e := net.Listen(network, net.JoinHostPort(addr, strconv.Itoa(p)))
+		config := listenerConfig()
+		ln, e := config.Listen(context.Background(), network, net.JoinHostPort(addr, strconv.Itoa(p)))
 		if e == nil {
 			return ln, nil
 		}

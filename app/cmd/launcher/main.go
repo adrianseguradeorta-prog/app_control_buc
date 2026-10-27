@@ -231,7 +231,7 @@ func run(base, action string) error {
 		}
 	}
 	logger.Print("arranque de aplicación ", current)
-	cmd, done, e := start(base, current)
+	cmd, done, e := start(base, current, candidate)
 	if e != nil {
 		if candidate {
 			logger.Print("ejecutable no arrancable; versión anterior conservada")
@@ -275,6 +275,21 @@ func run(base, action string) error {
 				}
 				return <-done
 			}
+			if e = activate(base); e != nil {
+				stop(cmd, done)
+				if e = update.SaveState(base, state); e != nil {
+					return e
+				}
+				if e = restore(); e != nil {
+					return e
+				}
+				logger.Print("activación no confirmada; versión anterior recuperada")
+				cmd, done, e = start(base, state.Current)
+				if e != nil {
+					return e
+				}
+				return <-done
+			}
 			logger.Print("versión activada ", current)
 		}
 	}
@@ -301,8 +316,12 @@ func readAnswer() string {
 	}
 	return strings.TrimSpace(out.String())
 }
-func start(base, version string) (*exec.Cmd, chan error, error) {
-	cmd := exec.Command(update.Program(base, version), "--base", base, "--managed")
+func start(base, version string, pending ...bool) (*exec.Cmd, chan error, error) {
+	args := []string{"--base", base, "--managed"}
+	if len(pending) > 0 && pending[0] {
+		args = append(args, "--pending-activation")
+	}
+	cmd := exec.Command(update.Program(base, version), args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -344,4 +363,21 @@ func ready(base, version string, done chan error) error {
 		time.Sleep(50 * time.Millisecond)
 	}
 	return fmt.Errorf("health check agotado")
+}
+
+func activate(base string) error {
+	r, e := readRunning(base)
+	if e != nil {
+		return e
+	}
+	c := http.Client{Timeout: 2 * time.Second}
+	resp, e := c.Post(endpoint(r, "/internal/activate?token="+r.Token), "text/plain", nil)
+	if e != nil {
+		return e
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("no se confirmó la activación")
+	}
+	return nil
 }
