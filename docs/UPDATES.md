@@ -15,3 +15,7 @@ El manifest incluye `manifest_version:1`, `application:"control-buceadores"`, `v
 Se descarga en `updater`, se comprueban tamaño, SHA y contenido, se prepara una carpeta nueva en `versions`. No se sustituye ninguna carpeta activa. Antes de validar/migrar/arrancar se crea backup local. Solo después de validar el candidato y su health check se escribe atómicamente `current/active.json`. Se conservan la versión anterior y su carpeta. Una descarga rechazada se elimina; una carpeta de versión ya existente no se sobrescribe.
 
 Una actualización incompatible con el launcher pide renovar este manualmente, con el servidor detenido. No existe autoactualización insegura del launcher en ejecución. El canal es de confianza: SHA-256 sobre HTTPS verifica integridad, no sustituye la seguridad de la cuenta de publicación.
+
+La versión candidata devuelve 503 a formularios y pantallas durante la comprobación inicial; solo habilita usuarios después del health check y del cambio atómico de versión activa. Así una recuperación no descarta escrituras nuevas. Si se interrumpe el launcher y queda un servidor en preparación, ciérrelo con `EJECUTAR.bat cerrar` y reinicie; no borre los locks ni los datos.
+
+Para un canal HTTPS corporativo con CA propia puede indicarse opcionalmente `ca_file` en la configuración externa. Se añade ese certificado a las raíces del sistema y se mantiene la verificación TLS; un archivo inválido impide consultar el canal, con arranque local como alternativa.
