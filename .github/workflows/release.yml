@@ -9,16 +9,31 @@ permissions:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: '1.23.x'
-      - run: go test ./...
+          cache: false
+      - name: Test with failure diagnostics
+        shell: bash
         working-directory: app
+        run: |
+          set +e
+          go test ./... 2>&1 | tee test-results.txt
+          result=${PIPESTATUS[0]}
+          if [ "$result" -ne 0 ]; then
+            details=$(cat test-results.txt)
+            details=${details//'%'/'%25'}
+            details=${details//$'\r'/'%0D'}
+            details=${details//$'\n'/'%0A'}
+            echo "::error title=Go test failure::$details"
+          fi
+          exit "$result"
       - if: runner.os == 'Linux'
         run: go test -race ./...
         working-directory: app
@@ -30,10 +45,11 @@ jobs:
     runs-on: ubuntu-latest
     environment: distribution
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: '1.23.x'
+          cache: false
       - name: Build clean assets
         working-directory: app
         env:

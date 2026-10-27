@@ -4,6 +4,8 @@ package update
 import (
 	"archive/zip"
 	"crypto/sha256"
+	"crypto/tls"
+	"crypto/x509"
 	"debug/pe"
 	"encoding/hex"
 	"encoding/json"
@@ -39,6 +41,7 @@ type Manifest struct {
 	Architectures map[string]Asset `json:"architectures"`
 }
 type Config struct {
+	CAFile         string `json:"ca_file,omitempty"`
 	ManifestURL    string `json:"manifest_url"`
 	TimeoutSeconds int    `json:"timeout_seconds"`
 	Owner          string `json:"owner"`
@@ -86,7 +89,19 @@ func Client(c Config) *http.Client {
 	if n <= 0 || n > 20 {
 		n = 5
 	}
-	return &http.Client{Timeout: time.Duration(n) * time.Second, CheckRedirect: func(r *http.Request, via []*http.Request) error {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	if c.CAFile != "" {
+		roots, e := x509.SystemCertPool()
+		if e != nil {
+			roots = x509.NewCertPool()
+		}
+		b, e := os.ReadFile(c.CAFile)
+		if e != nil || !roots.AppendCertsFromPEM(b) {
+			return &http.Client{Timeout: time.Duration(n) * time.Second, Transport: rejectTransport{}}
+		}
+		transport.TLSClientConfig = &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}
+	}
+	return &http.Client{Transport: transport, Timeout: time.Duration(n) * time.Second, CheckRedirect: func(r *http.Request, via []*http.Request) error {
 		if len(via) > 5 {
 			return fmt.Errorf("demasiadas redirecciones")
 		}
@@ -294,4 +309,10 @@ func Prepare(base string, m Manifest, arch string, client *http.Client) (string,
 		return "", e
 	}
 	return Program(base, m.Version), nil
+}
+
+type rejectTransport struct{}
+
+func (rejectTransport) RoundTrip(*http.Request) (*http.Response, error) {
+	return nil, fmt.Errorf("certificado de canal no válido")
 }

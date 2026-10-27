@@ -1,5 +1,3 @@
-//go:build !windows
-
 package main
 
 import (
@@ -43,6 +41,9 @@ func TestRealUpdateOfflineAndRollback(t *testing.T) {
 	os.MkdirAll(base, 0700)
 	build := func(v string) string {
 		p := filepath.Join(root, "server-"+v)
+		if runtime.GOOS == "windows" {
+			p += ".exe"
+		}
 		c := exec.Command("go", "build", "-buildvcs=false", "-ldflags", "-X main.appVersion="+v, "-o", p, "../control-buceadores")
 		if b, e := c.CombinedOutput(); e != nil {
 			t.Fatalf("build %v %s", e, b)
@@ -77,7 +78,7 @@ func TestRealUpdateOfflineAndRollback(t *testing.T) {
 	asset := func(v string, broken bool) []byte {
 		var b bytes.Buffer
 		z := zip.NewWriter(&b)
-		f, _ := z.Create("server")
+		f, _ := z.Create(filepath.Base(update.Program(base, v)))
 		data, _ := os.ReadFile(newbin)
 		if broken {
 			data = []byte("not executable")
@@ -115,7 +116,7 @@ func TestRealUpdateOfflineAndRollback(t *testing.T) {
 	defer srv.Close()
 	cert := filepath.Join(root, "ca.pem")
 	os.WriteFile(cert, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: srv.Certificate().Raw}), 0600)
-	cfg := update.Config{ManifestURL: srv.URL + "/update.json", TimeoutSeconds: 1}
+	cfg := update.Config{CAFile: cert, ManifestURL: srv.URL + "/update.json", TimeoutSeconds: 1}
 	cb, _ := json.Marshal(cfg)
 	os.MkdirAll(filepath.Join(base, "updater"), 0700)
 	os.WriteFile(filepath.Join(base, "updater", "config.json"), cb, 0600)
