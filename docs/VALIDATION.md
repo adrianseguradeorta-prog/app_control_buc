@@ -1,0 +1,13 @@
+# Validación 8.2.0
+
+La versión anterior se comprobó antes de modificarla: tests existentes aprobados y arranque real con respuesta `/health` y cierre CERRAR.
+
+En el checkout limpio: 75 pruebas/subpruebas aprobadas, cero fallidas u omitidas en la pasada Linux con `go test -race -count=1 -json ./...`; `go vet ./...` aprobado. El empaquetador se compila como parte de la suite y se ejecutó realmente para ambos Windows. Las pruebas del launcher construyen y ejecutan servidores reales 8.2.0 y 8.3.0, en ruta con espacios, con un canal HTTPS temporal y certificado de prueba explícitamente confiado.
+
+Se comprueban descarga GET sin cuerpos de datos, SHA-256, backup previo validable, activación después de health check, persistencia de usuarios/buceadores/inmersiones/foto/formatos, login y pantallas, paquete verificado no arrancable con recuperación de la versión instalada, misma versión sin descargar, segunda ejecución sin nuevo servidor, reinicio con canal offline. Los tests de actualización rechazan SHA inválido, ZIP corrupto, rutas arbitrarias, datos empaquetados, metadatos/arquitectura incoherentes y launcher insuficiente. Las migraciones 3->4 se prueban con campos desconocidos, repetición idempotente y fallo sin escritura para esquemas no admitidos. Hay pruebas de dos procesos de servidor arrancando simultáneamente y archivos lock obsoletos.
+
+Los originales se conservaron fuera del checkout publicable; este contiene fixtures completamente sintéticas. La auditoría no encontró los nombres originales y los paquetes finales contienen solo los archivos autorizados. No se cargaron datos operativos en las peticiones de actualización. Los logs de tests se conservan en el entorno de trabajo; no contienen una copia de la instalación.
+
+Pendiente de verificar en GitHub Actions: resultado de Windows y publicación. El workflow se ejecutará al subir main; solo crea una Release al subir un tag estable. No se equipara un workflow preparado con uno ejecutado.
+
+Límites: el entorno local es Linux. No hay validación sobre Windows limpio ni recurso SMB real. `pushd`/rutas relativas cubren la sintaxis UNC, y las pruebas reales usan espacios; esto no certifica semántica de todos los servidores SMB. No se simularon cortes eléctricos físicos. No hay migraciones de esquemas futuros; se rechazan. Se mantiene la reconstrucción fuente revisada, sin afirmar paridad visual total con el binario histórico V7 sin fuente.

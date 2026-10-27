@@ -1,0 +1,22 @@
+/dist/
+/release-output/
+/local-data/
+**/NO TOCAR/
+**/data/
+**/photos/
+**/backups/
+**/logs/
+**/updater/config.json
+**/config.json
+**/runtime.json
+*.db
+*.sqlite
+*.sqlite3
+store.json
+*.backup
+*.bak
+*.exe
+*.log
+*.lock
+.DS_Store
+Thumbs.db

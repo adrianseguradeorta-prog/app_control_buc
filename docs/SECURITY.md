@@ -1,0 +1,9 @@
+# Seguridad y privacidad
+
+El actualizador solo ejecuta GET de manifests y paquetes. Nunca crea peticiones con datos de store, fotos, usuarios, inmersiones o backups; nunca hace sincronización. Los tests del canal rechazan y cuentan cualquier método distinto de GET o cuerpo enviado. Los artefactos se generan por allowlist: programa y metadatos; nunca se comprime una instalación.
+
+Sin PAT ni secretos en binarios, BAT o configuración. Verificación obligatoria SHA-256 y HTTPS, sin desactivar TLS. Se verifican identidad de aplicación, semver, mínimo de launcher, esquema, arquitectura anunciada y cabecera PE; se rechazan rutas ZIP arbitrarias, duplicados, enlaces y archivos de datos. La seguridad de la cuenta GitHub y de quien configura el canal es necesaria: quien publique un manifest malicioso en un canal de confianza puede publicar código. No hay firma independiente del editor.
+
+El servidor LAN utiliza sesiones HttpOnly/SameSite, CSRF, contraseñas derivadas y permisos. Solo acepta hosts locales, IPs de las interfaces del servidor y nombres configurados en `allowed_hosts`. El cierre interno exige token y origen loopback. No exponga el puerto a Internet; restrinja el firewall a la subred autorizada. HTTP en una LAN no cifra contraseñas en tránsito: para redes no confiables se requiere una solución TLS corporativa y validar/adaptar la gestión del origen HTTPS antes de utilizarla; esta entrega sirve HTTP y no certifica una terminación TLS externa.
+
+Proteja el recurso compartido y los backups con permisos de Windows: quien pueda modificar los ejecutables o datos locales tiene capacidad administrativa sobre esta instalación. Los logs no incluyen contraseñas, tokens de cierre ni registros operativos. Mantienen eventos de arranque, comprobación, rechazo/activación y cierre en `logs/launcher.log`.

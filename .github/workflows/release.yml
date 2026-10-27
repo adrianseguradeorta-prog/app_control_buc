@@ -1,0 +1,52 @@
+name: Test and publish portable release
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+      - run: go test ./...
+        working-directory: app
+      - if: runner.os == 'Linux'
+        run: go test -race ./...
+        working-directory: app
+  publish:
+    permissions:
+      contents: write
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: distribution
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+      - name: Build clean assets
+        working-directory: app
+        env:
+          TAG: ${{ github.ref_name }}
+          DIST_REPO: ${{ vars.DISTRIBUTION_REPOSITORY || github.repository }}
+        run: |
+          test -n "$DIST_REPO"
+          go run ./cmd/package -version "${TAG#v}" -out ../release-output -public-base "https://github.com/$DIST_REPO/releases/download/$TAG"
+      - name: Publish binaries only
+        env:
+          GH_TOKEN: ${{ secrets.DISTRIBUTION_TOKEN || github.token }}
+          DIST_REPO: ${{ vars.DISTRIBUTION_REPOSITORY || github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          test -n "$GH_TOKEN"
+          gh release create "$TAG" --repo "$DIST_REPO" --title "$TAG" --notes "Versión portátil verificada. Consulte la documentación de despliegue local." release-output/*.zip release-output/update.json release-output/SHA256SUMS.txt
