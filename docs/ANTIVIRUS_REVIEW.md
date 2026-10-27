@@ -2,7 +2,7 @@
 
 ## Estado y evidencia
 
-Se ha notificado una alerta de **Cortex XDR** que bloquea `launcher.exe`: «Detectado ejecutable sospechoso», con publicador «Desconocido». No se dispone todavía del identificador de regla/incidente ni de un dictamen del equipo que gestiona esa protección. La captura no se publica: no es necesaria para distribuir los hashes y contiene información del entorno del usuario.
+Se ha notificado una alerta de **Cortex XDR** que bloquea `launcher.exe`: «Detectado ejecutable sospechoso», con publicador «Desconocido». Los detalles aportados muestran componente «Análisis local», código de Cortex `c0400055` y origen en una carpeta de red. El prefijo visible del hash coincide con el launcher x64 publicado, pero la captura corta el valor: no se puede contrastar el hash completo del equipo afectado. Ese código no se interpreta aquí como un nombre concreto de malware ni como dictamen de falso positivo. No se dispone de un dictamen del equipo que gestiona esa protección. La captura no se publica: no es necesaria para distribuir los hashes y contiene información del entorno del usuario.
 
 Los ejecutables de esta versión **no tienen firma Authenticode**. Este hecho puede ser relevante para políticas de confianza y reputación, pero no demuestra la causa exacta de la detección ni permite declararla falso positivo. Tampoco las pruebas funcionales o un SHA-256 correcto certifican ausencia de malware.
 
@@ -42,3 +42,9 @@ El equipo que administra Cortex debe revisar el ejecutable exacto y el evento, c
 No se recomienda desactivar Cortex, crear exclusiones amplias, renombrar el ejecutable para evitar el bloqueo ni ejecutar directamente otro componente como vía alternativa. Si la organización exige firma de código, se necesita su proceso autorizado y un certificado de firma confiable; no se dispone de él en este proyecto. Una firma legítima tampoco garantiza por sí sola que Cortex lo autorice.
 
 Se ha preparado un workflow separado (`antivirus.yml`) que verifica hashes y analiza los paquetes publicados con Microsoft Defender en Windows, sin exclusiones ni desactivar TLS. Su resultado se debe consultar en Actions: no sustituye el dictamen de Cortex ni acredita la política del equipo afectado.
+
+## Resultado independiente y estado de distribución
+
+Microsoft Defender terminó el análisis de los dos ZIP portátiles publicados y sus ejecutables sin detecciones, después de comprobar los hashes y actualizar firmas: motor `1.1.26090.9`, definiciones `1.461.224.0`. Registro de la ejecución: https://github.com/adrianseguradeorta-prog/app_control_buc/actions/runs/40488140401 . Se confirmó también `NotSigned` para los cuatro ejecutables. Este resultado corresponde a esos archivos y esa versión de Defender; no sustituye la política ni el análisis de Cortex XDR.
+
+La Release 8.2.0 se ha marcado como preliminar para retirarla del canal estable mientras se revisa. Sus archivos se mantienen para trazabilidad y análisis autorizado; no se ha cambiado su contenido ni sus hashes como respuesta al bloqueo.
