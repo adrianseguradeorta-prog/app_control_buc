@@ -218,6 +218,17 @@ class BrowserTests(unittest.TestCase):
                 raise
             self.assertIn('Seleccionar carpeta',p.locator('#connect').inner_text())
             self.assertTrue(p.evaluate('!!window.CBModel && !!window.CBArchive && !!crypto.subtle && isSecureContext && typeof showDirectoryPicker==="function"'))
+            # Call the native picker from an actual trusted click, without selecting
+            # any real folder. Pending dialog or cancellation is expected; a
+            # SecurityError would reveal that the file origin is not supported.
+            p.evaluate("""()=>{window.nativePickerResult={state:'not-started'};document.getElementById('connect').addEventListener('click',e=>{e.stopImmediatePropagation();window.nativePickerResult={state:'pending'};window.showDirectoryPicker({mode:'readwrite'}).then(()=>{window.nativePickerResult={state:'selected'}}).catch(e=>{window.nativePickerResult={state:'error',name:e.name,message:e.message}})},true)}""")
+            p.locator('#connect').click()
+            deadline=time.monotonic()+1
+            result=p.evaluate('window.nativePickerResult')
+            while result['state']=='pending' and time.monotonic()<deadline:
+                time.sleep(.05);result=p.evaluate('window.nativePickerResult')
+            self.assertIn(result['state'],['pending','selected','error'])
+            if result['state']=='error':self.assertEqual(result['name'],'AbortError',result)
             self.assertEqual(errs,[])
         finally:c.close();tmp.cleanup()
 
